@@ -1,0 +1,186 @@
+---
+title: "Polio Trials"
+author: "Pinak Shome"
+
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+library(HistData)
+
+```
+
+# Introduction
+
+The challenge is to interpret the results according to the principles introduced in the polio case study.
+
+# Load Data
+
+```{r}
+data("PolioTrials")
+dat<-PolioTrials
+kable(dat[,1:4])
+
+```
+
+
+## Context
+
+The basic question "did the vaccine work?" was addressed using the data from the randomized control trial of the Salk vaccine. The count of paralytic polio cases in the vaccinated group was compared to the counts that were produced under the null hypothesis that the vaccine had no effect on the incidences of paralytic polio. The second model examined for this null hypothesis was that each paralytic polio case in the pooled treatment and placebo group was assigned to the treatment group with probability equal to the ratio of the size of the treatment group to the size of pooled treatment and placebo group.   
+
+Below, the computation used in that analysis is repeated for the vaccinated group and the control group in the observed control trial. (`Vaccinated` and `Controls` in the `ObservedControl` experiment)
+
+Recall rbinom(n,ct,prop) is a function that models the number of random assignments to the distinguished group from a population of size `ct` if the probability of assignment to the distinguished group is `prop`. The value of `n` is the number of times to repeat the experiment.
+
+### Test
+
+```{r}
+n<-10000 # number of simulations
+
+# Calculate the number of paralytic polio cases in the pooled vaccination and control group.
+ct<-sum(dat$Paralytic[5:6])
+
+# Calculate the proportion "prop" of the the pooled vaccination and control group that are in the vaccination group.
+prop<-dat$Population[5]/sum(dat$Population[5:6])
+
+# Generate 10,000 counts of paralytic polio cases in the vaccination group under the model that each paralytic polio case in the pooled vaccination and control group has probability "prop" of being assigned to the vaccination group.
+set.seed(45678765)
+sim<-rbinom(n,ct,prop)
+
+# Plot a histogram of the simulated counts.
+qplot(sim,bins=20)
+
+# Calculate the proportion of the simulated counts of paralytic polio in the "Vaccinated" group that are less than or equal to the observed count:
+mean(sim<=dat$Paralytic[5])
+```
+
+##part 1
+
+*  What is the proportion of paralytic polio cases in the `Vaccinated` group in the `ObservedControl` experiment? 0.0001711727
+
+*  What is the proportion of paralytic polio cases in the `Controls` group in the `ObservedControl` experiment? 0.0004550638
+
+*  What is the proportion of paralytic polio cases in the pooled `Vaccinated` and `Controls` groups in the `ObservedControl` experiment? 0.0003885254
+
+```{r}
+# ratio of the value in the 5th row of the "Paralytic"
+# column of "dat" to the value in the 5th row of the "Population"
+# column of "dat":
+dat$Paralytic[5]/dat$Population[5]
+
+# ratio of the value in the 6th row of the "Paralytic"
+# column of "dat" to the value in the 6th row of the "Population"
+# column of "dat":
+dat$Paralytic[6]/dat$Population[6]
+
+# ratio of the sum of the values in the 5th and 6th row of 
+# the "Paralytic" column of "dat" to the sum of the values in the 
+# 5th and 6th row of the "Population" column of "dat":
+sum(dat$Paralytic[5:6])/sum(dat$Population[5:6])
+```
+
+## part 2
+
+Lets check if the observed number of paralytic polio cases in the `Vaccinated` group in the `ObservedControl` experiment consistent with the probability model that each paralytic polio case in the pooled vaccinated and control group was assigned to the vaccinated group with probability equal to the ratio of the size of the vaccinated group to the size of pooled vaccinated and control group.
+
+```{r}
+# some statistics of the simulated values under the probability model
+mean(sim)
+min(sim)
+max(sim)
+```
+
+Probablity range for paralytic polio in controlled group of vaccinated and controls group here is 54 to 117 and mean is 86.2878. The observed paralytic cases in the observed control vaccinated grouo is 38 which is far off the range obtained and the mean. We can conclude from this that the results and henceforth the study is inconsistent.
+
+
+## part 3
+(10 points)
+
+No, we cannot conclude that the vaccination causes a reduction in the likelihood of contracting paralytic
+polio. There is no clear evidence of the effectiveness of the vaccination because the Vaccinated group and
+the Controls group have systematic differences other than being vaccinated or not, like age and parental
+consent. Therefore, we can’t isolate the vaccination status as the cause of the difference between the groups.
+
+
+
+## Context
+
+In this section, we will address the question of whether the `NotInoculated` and `Placebo` groups in the `Randomized Control` experiment had statistically significantly different rates of paralytic polio. 
+
+Recall that the `NotInoculated` and `Placebo` groups differ in that the children in the `Placebo` group had been enrolled in the vaccine trial while the parents of the children in the `NotInoculated` group did not enroll their children. If the home environments in these groups differed systematically in ways related to susceptibility to paralytic polio, rates in the two groups could differ beyond the amount readily explained by chance. If the enrolled and not enrolled populations didn't differ in relevant ways, the differences should be fairly consistent with chance.
+
+The approach, using the `rbinom` function again, implements the idea that populations in the `NotInoculated` and `Placebo` groups in the `Randomized Control` experiment were the same in regards to paralytic polio cases by using the `rbinom` function to assign paralytic polio cases in the combined `NotInoculated` and `Placebo` groups of the `RandomizedControl` experiment to the `Placebo` group with probability equal to the ratio of the size of the `Placebo` group to the size of pooled `Placebo` group and `NotInoculated` group.
+
+### Data summary
+
+```{r}
+# proportion of paralytic polio cases in "Placebo"
+dat$Paralytic[2]/dat$Population[2]
+
+# proportion of paralytic polio cases in "NotInoculated"
+dat$Paralytic[3]/dat$Population[3]
+
+# proportion of paralytic polio cases in "Placebo" and "NotInoculated" combined
+sum(dat$Paralytic[2:3])/sum(dat$Population[2:3])
+```
+
+
+### Test
+
+```{r}
+n<-10000 # number of simulations
+
+# Calculate the number of paralytic polio cases in the pooled "Placebo" and "NotInoculated" group.
+ct<-sum(dat$Paralytic[2:3])
+
+# Calculate the proportion "prop" of the the pooled "Placebo" and "NotInoculated" group that are in the "Placebo" group.
+prop<-dat$Population[2]/sum(dat$Population[2:3])
+
+# Generate 10,000 counts of paralytic polio cases in the "Placebo" group under the model that each paralytic polio case in the pooled pooled "Placebo" and "NotInoculated" group has probability "prop" of being assigned to the "Placebo" group.
+set.seed(45678765)
+sim2<-rbinom(n,ct,prop) 
+qplot(sim2,bins=20)
+
+# proportion of the simulated counts of paralytic polio in the "Placebo" that are less than or equal to the observed count:
+mean(sim2<=dat$Paralytic[2])
+
+# proportion of the simulated counts of paralytic polio in the "Placebo" that are greater than or equal to the observed count:
+mean(sim2>=dat$Paralytic[2])
+```
+
+# Part 2.2
+
+Lets Consider the null hypothesis that children who receive the placebo and children whose parents don't consent to participation have the same susceptibility to paralytic polio. One possible probability model for this is that each case in the pooled `Placebo` and `NotInoculated` paralytic polio cases can be viewed as being assigned to the `Placebo` group with probability equal to the proportion of the `Placebo` population in the pooled `Placebo` and `NotInoculated` population. Lets check if these data are consistent with the null hypothesis. We will support our conclusion by referring to the values generated in simulation above. 
+
+```{r}
+# some statistics of the simulated values under the probability model
+mean(sim2)
+min(sim2)
+max(sim2)
+```
+
+No, it is not consistent. Similar to the reasoning in P2, the observed value of paralytic polio cases in the
+Placebo group under RandomizedControl is 115. However, the observed value of 115 is to the far right in the histogram and the probability of the simulated number of cases being greatervthan or equal to 115 is very low (4e-04). It shows that the number of paralytic polio cases observed is high
+relative to the values generated under the null hypothesis. Hence, we reject the null hypothesis and conclude
+that the Placebo and NotInoculated populations are different in susceptibility to paralytic polio.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
